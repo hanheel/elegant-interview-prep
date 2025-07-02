@@ -48,13 +48,13 @@ const Index = () => {
 
   const handlePracticeStart = (settings: PracticeSettingsData) => {
     setPracticeSettings(settings);
-    // TODO: 연습 모드 실행
+    setCurrentView('practice');
     console.log('Practice started with:', { documentData, settings });
   };
 
   const handleInterviewStart = (settings: InterviewSettingsData) => {
     setInterviewSettings(settings);
-    // TODO: 실전 모드 실행
+    setCurrentView('interview');
     console.log('Interview started with:', { documentData, settings });
   };
 

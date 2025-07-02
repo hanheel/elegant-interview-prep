@@ -20,7 +20,10 @@ export function ModeSelection({ onModeSelect }: ModeSelectionProps) {
       </div>
       
       <div className="grid md:grid-cols-2 gap-6">
-        <Card className="cursor-pointer hover:shadow-lg transition-all duration-200 border-2 hover:border-primary/50">
+        <Card 
+          className="cursor-pointer hover:shadow-lg transition-all duration-200 border-2 hover:border-primary/50"
+          onClick={() => onModeSelect('practice')}
+        >
           <CardHeader className="text-center">
             <div className="mx-auto mb-4 p-3 bg-blue-100 dark:bg-blue-900 rounded-full w-fit">
               <BookOpen className="h-8 w-8 text-blue-600 dark:text-blue-400" />
@@ -40,14 +43,20 @@ export function ModeSelection({ onModeSelect }: ModeSelectionProps) {
             <Button 
               className="w-full" 
               size="lg"
-              onClick={() => onModeSelect('practice')}
+              onClick={(e) => {
+                e.stopPropagation();
+                onModeSelect('practice');
+              }}
             >
               연습 모드 시작
             </Button>
           </CardContent>
         </Card>
 
-        <Card className="cursor-pointer hover:shadow-lg transition-all duration-200 border-2 hover:border-primary/50">
+        <Card 
+          className="cursor-pointer hover:shadow-lg transition-all duration-200 border-2 hover:border-primary/50"
+          onClick={() => onModeSelect('interview')}
+        >
           <CardHeader className="text-center">
             <div className="mx-auto mb-4 p-3 bg-green-100 dark:bg-green-900 rounded-full w-fit">
               <Target className="h-8 w-8 text-green-600 dark:text-green-400" />
@@ -67,7 +76,10 @@ export function ModeSelection({ onModeSelect }: ModeSelectionProps) {
             <Button 
               className="w-full" 
               size="lg"
-              onClick={() => onModeSelect('interview')}
+              onClick={(e) => {
+                e.stopPropagation();
+                onModeSelect('interview');
+              }}
             >
               실전 모드 시작
             </Button>
