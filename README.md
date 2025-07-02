@@ -1,73 +1,29 @@
-# Welcome to your Lovable project
+## 🔗 배포 링크
+[🔗바로가기](https://elegant-interview-prep.lovable.app)
 
-## Project info
+## 💻 프로젝트 설명
+사용자가 정리한 기술 개념에 대해 AI가 질문을 던지고 피드백을 주며, 말로 설명하는 연습을 도와주는 기술 면접 대비 도우미 웹서비스
 
-**URL**: https://lovable.dev/projects/f64eab93-0a35-4ba2-a86b-a8027a3565ef
+## 👥 페르소나
 
-## How can I edit this code?
+**프론트엔드 취업 준비생 – 박서현(24세)**
 
-There are several ways of editing your application.
+- 직업: 프론트엔드 부트캠프 수료생, 현재 취업준비생
+- 라이프스타일: 오전엔 학습(공부), 오후엔 프로젝트 진행, 저녁엔 스터디 참여
+- 목표: 기술면접에서 말문이 막히지 않고 부드럽게 이어 말하기
+- 니즈: 준비한 기술 개념을 **내 언어**로 정리하고, 즉각적인 피드백을 받아보고 싶음
+- 페인 포인트: 개념은 외웠지만 설명이 매끄럽지 않음, 비판 없이 피드백 받을 공간 부족
 
-**Use Lovable**
+## 📚 사용자 시나리오 및 스토리
+**기술 면접 전, 개념 설명 연습하기**
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/f64eab93-0a35-4ba2-a86b-a8027a3565ef) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
-
-**Edit a file directly in GitHub**
-
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/f64eab93-0a35-4ba2-a86b-a8027a3565ef) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+- **상황:** 서현은 내일 면접을 앞두고 있는데, CSR과 SSR의 차이를 설명하다가 자꾸 꼬이는 걸 느낀다.
+- **사용자 시나리오:**
+    1. 정리한 노션 링크를 연습 툴에 붙여넣는다
+    2. 챗봇이 첫 질문 “CSR이 뭔가요?”를 던진다
+    3. 서현이 말로 설명하면, 챗봇이 “음, 상황 예시가 있으면 더 와닿을 것 같아요!”라고 피드백
+    4. 설명을 고쳐 다시 말하면, 챗봇이 “그건 SPA에서 CSR이 유리하다는 말씀이시죠?”라고 꼬리질문
+    5. 5개 질문이 끝난 후, “비개발자 친구” 역할의 챗봇이 질문을 이어간다
+    6. “그런데 왜 서버에서 렌더링하면 더 빠른 거예요?” 같은 꼬리질문으로 이해도를 더 테스트함
+- **사용자 스토리:**
+    프론트엔드 취업 준비생으로서, 저는 기술 개념을 내 언어로 설명하는 연습이 필요합니다. 그래야 실제 면접에서 당황하지 않고, 설득력 있게 말할 수 있다고 생각합니다.
