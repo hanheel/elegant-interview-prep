@@ -7,6 +7,9 @@ import { ModeSelection } from '@/components/ModeSelection';
 import { DocumentInput } from '@/components/DocumentInput';
 import { PracticeSettings } from '@/components/PracticeSettings';
 import { InterviewSettings } from '@/components/InterviewSettings';
+import { PracticeSession } from '@/components/PracticeSession';
+import { InterviewSession } from '@/components/InterviewSession';
+import { InterviewComplete } from '@/components/InterviewComplete';
 
 type DocumentData = {
   type: 'link' | 'text';
@@ -31,6 +34,7 @@ const Index = () => {
   const [documentData, setDocumentData] = useState<DocumentData | null>(null);
   const [practiceSettings, setPracticeSettings] = useState<PracticeSettingsData | null>(null);
   const [interviewSettings, setInterviewSettings] = useState<InterviewSettingsData | null>(null);
+  const [interviewScore, setInterviewScore] = useState<number | null>(null);
 
   const handleModeSelect = (mode: 'practice' | 'interview') => {
     setCurrentMode(mode);
@@ -58,6 +62,35 @@ const Index = () => {
     console.log('Interview started with:', { documentData, settings });
   };
 
+  const handlePracticeComplete = () => {
+    setCurrentView('home');
+    // 연습 완료 후 초기화
+    setCurrentMode(null);
+    setDocumentData(null);
+    setPracticeSettings(null);
+  };
+
+  const handleInterviewComplete = (score: number) => {
+    setInterviewScore(score);
+    setCurrentView('interview-complete');
+  };
+
+  const handleSaveToArchive = () => {
+    // TODO: 아카이브에 저장 로직
+    console.log('Saving to archive with score:', interviewScore);
+    setCurrentView('archive');
+  };
+
+  const handleBackToHome = () => {
+    setCurrentView('home');
+    // 모든 상태 초기화
+    setCurrentMode(null);
+    setDocumentData(null);
+    setPracticeSettings(null);
+    setInterviewSettings(null);
+    setInterviewScore(null);
+  };
+
   const handleBack = () => {
     if (currentView === 'document-input') {
       setCurrentView('home');
@@ -78,15 +111,35 @@ const Index = () => {
       case 'interview-settings':
         return <InterviewSettings onStart={handleInterviewStart} onBack={handleBack} />;
       case 'practice':
+        return (
+          <PracticeSession
+            documentData={documentData!}
+            settings={practiceSettings!}
+            onComplete={handlePracticeComplete}
+          />
+        );
       case 'interview':
+        return (
+          <InterviewSession
+            documentData={documentData!}
+            settings={interviewSettings!}
+            onComplete={handleInterviewComplete}
+          />
+        );
+      case 'interview-complete':
+        return (
+          <InterviewComplete
+            score={interviewScore!}
+            onSaveToArchive={handleSaveToArchive}
+            onHome={handleBackToHome}
+          />
+        );
       case 'documents':
       case 'archive':
         return (
           <div className="container max-w-4xl mx-auto py-8">
             <div className="text-center">
               <h2 className="text-2xl font-bold mb-4">
-                {currentView === 'practice' && '연습 모드'}
-                {currentView === 'interview' && '실전 모드'}
                 {currentView === 'documents' && '문서 저장소'}
                 {currentView === 'archive' && '아카이브'}
               </h2>
