@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { ThemeProvider } from '@/components/ThemeProvider';
 import { Header } from '@/components/Header';
@@ -32,6 +31,14 @@ type InterviewSettingsData = {
   maxSpeakingTime?: number;
 };
 
+interface Message {
+  id: string;
+  type: 'ai' | 'user';
+  content: string;
+  timestamp: Date;
+  score?: number;
+}
+
 const Index = () => {
   const [currentView, setCurrentView] = useState('home');
   const [currentMode, setCurrentMode] = useState<'practice' | 'interview' | null>(null);
@@ -39,6 +46,7 @@ const Index = () => {
   const [practiceSettings, setPracticeSettings] = useState<PracticeSettingsData | null>(null);
   const [interviewSettings, setInterviewSettings] = useState<InterviewSettingsData | null>(null);
   const [interviewScore, setInterviewScore] = useState<number | null>(null);
+  const [chatHistory, setChatHistory] = useState<Message[]>([]);
   const [showExitModal, setShowExitModal] = useState(false);
   const [pendingView, setPendingView] = useState<string | null>(null);
 
@@ -76,8 +84,9 @@ const Index = () => {
     setPracticeSettings(null);
   };
 
-  const handleInterviewComplete = (score: number) => {
+  const handleInterviewComplete = (score: number, messages: Message[]) => {
     setInterviewScore(score);
+    setChatHistory(messages);
     setCurrentView('interview-complete');
   };
 
@@ -88,7 +97,8 @@ const Index = () => {
       date: new Date().toISOString(),
       score: interviewScore!,
       documentData: documentData!,
-      settings: interviewSettings!
+      settings: interviewSettings!,
+      chatHistory: chatHistory
     };
     
     const existingArchive = JSON.parse(localStorage.getItem('interview-archive') || '[]');

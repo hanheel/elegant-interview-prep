@@ -4,7 +4,15 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Archive, Calendar, Clock, Trophy, Eye, Trash2 } from 'lucide-react';
+import { Archive, Calendar, Clock, Trophy, Eye, Trash2, User, Bot } from 'lucide-react';
+
+interface Message {
+  id: string;
+  type: 'ai' | 'user';
+  content: string;
+  timestamp: Date;
+  score?: number;
+}
 
 interface ArchiveItem {
   id: string;
@@ -19,6 +27,7 @@ interface ArchiveItem {
     speakingStyle: 'friend' | 'interviewer';
     mode: 'voice' | 'chat';
   };
+  chatHistory?: Message[];
 }
 
 export function ArchivePage() {
@@ -132,14 +141,14 @@ export function ArchivePage() {
                         상세보기
                       </Button>
                     </DialogTrigger>
-                    <DialogContent className="max-w-2xl">
+                    <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
                       <DialogHeader>
                         <DialogTitle className="flex items-center gap-2">
                           <Trophy className="h-5 w-5" />
                           면접 상세 정보 - {item.score}점
                         </DialogTitle>
                       </DialogHeader>
-                      <div className="space-y-4">
+                      <div className="space-y-6">
                         <div>
                           <h4 className="font-semibold mb-2">면접 정보</h4>
                           <div className="grid grid-cols-2 gap-4 text-sm">
@@ -161,6 +170,7 @@ export function ArchivePage() {
                             </div>
                           </div>
                         </div>
+                        
                         <div>
                           <h4 className="font-semibold mb-2">사용된 문서</h4>
                           <div className="p-3 bg-muted rounded-lg text-sm">
@@ -170,6 +180,41 @@ export function ArchivePage() {
                             <p className="break-words">{item.documentData.content}</p>
                           </div>
                         </div>
+
+                        {item.chatHistory && item.chatHistory.length > 0 && (
+                          <div>
+                            <h4 className="font-semibold mb-2">면접 대화 기록</h4>
+                            <div className="max-h-96 overflow-y-auto border rounded-lg p-4 space-y-3">
+                              {item.chatHistory.map((message) => (
+                                <div
+                                  key={message.id}
+                                  className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
+                                >
+                                  <div
+                                    className={`max-w-[80%] p-3 rounded-lg text-sm ${
+                                      message.type === 'user'
+                                        ? 'bg-primary text-primary-foreground ml-4'
+                                        : 'bg-muted mr-4'
+                                    }`}
+                                  >
+                                    <div className="flex items-start gap-2">
+                                      {message.type === 'ai' && <Bot className="h-4 w-4 mt-0.5 text-muted-foreground" />}
+                                      {message.type === 'user' && <User className="h-4 w-4 mt-0.5" />}
+                                      <div className="flex-1">
+                                        <p>{message.content}</p>
+                                        {message.score && (
+                                          <Badge className="mt-2" variant="secondary" size="sm">
+                                            점수: {message.score}점
+                                          </Badge>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </DialogContent>
                   </Dialog>

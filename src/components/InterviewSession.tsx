@@ -16,7 +16,7 @@ interface InterviewSessionProps {
     mode: 'voice' | 'chat';
     maxSpeakingTime?: number;
   };
-  onComplete: (score: number) => void;
+  onComplete: (score: number, chatHistory: Message[]) => void;
 }
 
 interface Message {
@@ -30,17 +30,17 @@ interface Message {
 const mockQuestions = {
   friend: [
     "안녕하세요! 개발 공부하면서 가장 재미있었던 프로젝트가 무엇인지 궁금해요. 어떤 기술을 사용하셨고, 왜 그 기술을 선택하게 되셨는지 구체적인 경험을 들려주실 수 있을까요?",
-    "말씀해주신 기술 선택이 정말 흥미롭네요! 다른 방법도 고려해보셨을 텐데, 최종적으로 그 기술을 선택하신 구체적인 이유가 있으실까요? 실제 경험담을 포함해서 설명해주시면 더 좋을 것 같아요.",
+    "말씀해주신 기술 선택이 정말 흥미롭네요! FSD 아키텍처에 대해 이론적인 부분은 이해가 가는데, 구체적인 예시가 있으면 더 좋을 것 같아요. 경험을 담은 예시를 말씀해 주실 수 있나요?",
     "개발하면서 정말 어려웠던 버그나 문제 상황이 있으셨나요? 어떻게 해결하셨는지, 그 과정에서 배운 점이 있다면 구체적인 예시와 함께 말씀해주세요.",
     "팀 프로젝트를 진행하실 때 어떤 역할을 주로 맡으셨나요? 팀원들과 소통하면서 겪으셨던 구체적인 경험이나 해결 방법이 있다면 들려주세요.",
     "앞으로 어떤 개발자가 되고 싶으신지, 그리고 그 목표를 위해 현재 어떤 노력을 하고 계신지 구체적인 계획과 함께 말씀해주세요."
   ],
   interviewer: [
-    "본인의 주요 프로젝트 경험에 대해 상세히 설명해주세요. 특히 기술적 난제와 해결 과정을 중심으로 말씀해주시기 바랍니다.",
-    "사용하신 기술 스택을 선택한 구체적인 근거는 무엇인가요? 다른 대안과 비교했을 때의 장단점도 함께 설명해주세요.",
+    "본인의 주요 프로젝트 경험에 대해 상세히 설명해주시기 바랍니다. 특히 기술적 난제와 해결 과정을 중심으로 구체적인 예시를 포함해서 말씀해주세요.",
+    "사용하신 기술 스택을 선택한 구체적인 근거는 무엇인가요? 다른 대안과 비교했을 때의 장단점도 함께 설명해주시기 바랍니다.",
     "개발 중 발생한 가장 인상 깊은 기술적 문제와 해결 방법에 대해 말씀해주세요. 문제 해결 과정에서의 사고 과정도 포함해서 설명해주시기 바랍니다.",
-    "팀워크에서 본인의 역할과 기여도를 구체적인 사례와 함께 설명해주세요. 협업 과정에서 발생한 갈등이나 문제를 어떻게 해결하셨는지도 말씀해주시기 바랍니다.",
-    "향후 커리어 목표와 구체적인 성장 계획을 말씀해주세요. 현재 부족한 부분과 이를 개선하기 위한 실행 방안도 포함해서 설명해주시기 바랍니다."
+    "팀워크에서 본인의 역할과 기여도를 구체적인 사례와 함께 설명해주시기 바랍니다. 협업 과정에서 발생한 갈등이나 문제를 어떻게 해결하셨는지도 말씀해주세요.",
+    "향후 커리어 목표와 구체적인 성장 계획을 말씀해주시기 바랍니다. 현재 부족한 부분과 이를 개선하기 위한 실행 방안도 포함해서 설명해주세요."
   ]
 };
 
@@ -70,6 +70,15 @@ export function InterviewSession({ documentData, settings, onComplete }: Intervi
       };
       setMessages([firstMessage]);
       setIsAiSpeaking(false);
+      
+      // 음성 모드면 자동으로 모달 표시
+      if (settings.mode === 'voice' && settings.maxSpeakingTime) {
+        setTimeout(() => {
+          setVoiceTimeLeft(settings.maxSpeakingTime!);
+          setShowVoiceModal(true);
+          setIsRecording(true);
+        }, 1000);
+      }
     }, 2000);
 
     // 타이머 시작
@@ -93,7 +102,6 @@ export function InterviewSession({ documentData, settings, onComplete }: Intervi
         setVoiceTimeLeft(prev => {
           if (prev <= 1) {
             clearInterval(voiceTimer);
-            setShowVoiceModal(false);
             handleVoiceComplete();
             return 0;
           }
@@ -148,6 +156,15 @@ export function InterviewSession({ documentData, settings, onComplete }: Intervi
           setMessages(prev => [...prev, nextQuestion]);
           setCurrentQuestionIndex(nextQuestionIndex);
           setIsAiSpeaking(false);
+          
+          // 음성 모드면 자동으로 모달 표시
+          if (settings.mode === 'voice' && settings.maxSpeakingTime) {
+            setTimeout(() => {
+              setVoiceTimeLeft(settings.maxSpeakingTime!);
+              setShowVoiceModal(true);
+              setIsRecording(true);
+            }, 1000);
+          }
         }, 1000);
       } else {
         setIsAiSpeaking(false);
@@ -155,19 +172,70 @@ export function InterviewSession({ documentData, settings, onComplete }: Intervi
     }, 3000);
   };
 
-  const handleVoiceStart = () => {
-    if (settings.maxSpeakingTime) {
-      setVoiceTimeLeft(settings.maxSpeakingTime);
-      setShowVoiceModal(true);
-      setIsRecording(true);
-    }
-  };
-
   const handleVoiceComplete = () => {
     setIsRecording(false);
+    setShowVoiceModal(false);
     // 음성을 텍스트로 변환 (모의)
     const mockTranscription = "음성으로 답변한 내용이 여기에 표시됩니다. 실제 구현에서는 음성 인식 API를 사용하여 변환됩니다.";
     setInputValue(mockTranscription);
+    
+    // 자동 전송
+    setTimeout(() => {
+      const userMessage: Message = {
+        id: Date.now().toString(),
+        type: 'user',
+        content: mockTranscription,
+        timestamp: new Date()
+      };
+
+      setMessages(prev => [...prev, userMessage]);
+      setInputValue('');
+      setIsAiSpeaking(true);
+
+      // AI 피드백 처리
+      setTimeout(() => {
+        const score = Math.floor(Math.random() * 21) + 80;
+        setScores(prev => [...prev, score]);
+
+        const feedback = generateFeedback(score, settings.speakingStyle);
+        const feedbackMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          type: 'ai',
+          content: feedback,
+          timestamp: new Date(),
+          score
+        };
+
+        setMessages(prev => [...prev, feedbackMessage]);
+
+        // 다음 질문
+        if (currentQuestionIndex < questions.length - 1) {
+          setTimeout(() => {
+            const nextQuestionIndex = currentQuestionIndex + 1;
+            const nextQuestion: Message = {
+              id: (Date.now() + 2).toString(),
+              type: 'ai',
+              content: questions[nextQuestionIndex],
+              timestamp: new Date()
+            };
+            setMessages(prev => [...prev, nextQuestion]);
+            setCurrentQuestionIndex(nextQuestionIndex);
+            setIsAiSpeaking(false);
+            
+            // 다음 음성 모달 자동 표시
+            if (settings.mode === 'voice' && settings.maxSpeakingTime) {
+              setTimeout(() => {
+                setVoiceTimeLeft(settings.maxSpeakingTime!);
+                setShowVoiceModal(true);
+                setIsRecording(true);
+              }, 1000);
+            }
+          }, 1000);
+        } else {
+          setIsAiSpeaking(false);
+        }
+      }, 3000);
+    }, 100);
   };
 
   const generateFeedback = (score: number, style: 'friend' | 'interviewer') => {
@@ -204,7 +272,7 @@ export function InterviewSession({ documentData, settings, onComplete }: Intervi
 
   const handleInterviewEnd = () => {
     const averageScore = scores.length > 0 ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0;
-    onComplete(averageScore);
+    onComplete(averageScore, messages);
   };
 
   const formatTime = (seconds: number) => {
@@ -217,105 +285,102 @@ export function InterviewSession({ documentData, settings, onComplete }: Intervi
 
   return (
     <div className="container max-w-4xl mx-auto py-8">
-      <div className="mb-6">
-        <div className="flex justify-between items-center mb-2">
-          <h2 className="text-2xl font-bold">실전 면접</h2>
-          <div className="flex items-center gap-4">
-            <Badge variant="outline" className="flex items-center gap-2">
-              <Clock className="h-4 w-4" />
-              {formatTime(timeLeft)}
-            </Badge>
-            <Badge variant={settings.mode === 'voice' ? 'default' : 'secondary'}>
-              {settings.mode === 'voice' ? '음성 모드' : '채팅 모드'}
-            </Badge>
-          </div>
-        </div>
-        <Progress value={progress} className="w-full" />
-      </div>
-
-      <Card className="h-[600px] flex flex-col">
-        <CardContent className="flex-1 flex flex-col p-0">
-          {/* 채팅 영역 */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            {/* AI 로딩 중일 때 */}
-            {isAiSpeaking && (
-              <div className="flex justify-start">
-                <div className="max-w-[80%] p-3 rounded-lg bg-muted mr-4">
-                  <div className="flex items-center gap-2">
-                    <Bot className="h-5 w-5 text-muted-foreground" />
-                    <div className="flex items-center gap-1">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      <span className="text-sm text-muted-foreground">답변을 준비하고 있어요...</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {messages.map((message) => (
-              <div
-                key={message.id}
-                className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
-              >
-                <div
-                  className={`max-w-[80%] p-3 rounded-lg ${
-                    message.type === 'user'
-                      ? 'bg-primary text-primary-foreground ml-4'
-                      : 'bg-muted mr-4'
-                  }`}
-                >
-                  <div className="flex items-start gap-2">
-                    {message.type === 'ai' && <Bot className="h-5 w-5 mt-0.5 text-muted-foreground" />}
-                    {message.type === 'user' && <User className="h-5 w-5 mt-0.5" />}
-                    <div className="flex-1">
-                      <p className="text-sm">{message.content}</p>
-                      {message.score && (
-                        <Badge className="mt-2" variant="secondary">
-                          점수: {message.score}점
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* 입력 영역 */}
-          <div className="border-t p-4">
-            <div className="flex gap-2">
-              <Input
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                placeholder="답변을 입력하세요..."
-                onKeyPress={(e) => e.key === 'Enter' && !isAiSpeaking && handleSendMessage()}
-                className="flex-1"
-                disabled={isAiSpeaking}
-              />
-              {settings.mode === 'voice' && (
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={handleVoiceStart}
-                  disabled={isAiSpeaking}
-                  className={isRecording ? 'bg-red-100 hover:bg-red-200' : ''}
-                >
-                  {isRecording ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
-                </Button>
-              )}
-              <Button 
-                onClick={handleSendMessage} 
-                disabled={!inputValue.trim() || isAiSpeaking}
-              >
-                <Send className="h-4 w-4" />
-              </Button>
+      {/* 고정된 프로그래스 바 */}
+      <div className="fixed top-14 left-0 right-0 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
+        <div className="container max-w-4xl mx-auto py-4">
+          <div className="flex justify-between items-center mb-2">
+            <h2 className="text-2xl font-bold">실전 면접</h2>
+            <div className="flex items-center gap-4">
+              <Badge variant="outline" className="flex items-center gap-2">
+                <Clock className="h-4 w-4" />
+                {formatTime(timeLeft)}
+              </Badge>
+              <Badge variant={settings.mode === 'voice' ? 'default' : 'secondary'}>
+                {settings.mode === 'voice' ? '음성 모드' : '채팅 모드'}
+              </Badge>
             </div>
           </div>
-        </CardContent>
-      </Card>
+          <Progress value={progress} className="w-full" />
+        </div>
+      </div>
+
+      {/* 컨텐츠 영역 (프로그래스 바 높이만큼 여백 추가) */}
+      <div className="mt-24">
+        <Card className="h-[600px] flex flex-col">
+          <CardContent className="flex-1 flex flex-col p-0">
+            {/* 채팅 영역 */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              {/* AI 로딩 중일 때 */}
+              {isAiSpeaking && (
+                <div className="flex justify-start">
+                  <div className="max-w-[80%] p-3 rounded-lg bg-muted mr-4">
+                    <div className="flex items-center gap-2">
+                      <Bot className="h-5 w-5 text-muted-foreground" />
+                      <div className="flex items-center gap-1">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <span className="text-sm text-muted-foreground">답변을 준비하고 있어요...</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {messages.map((message) => (
+                <div
+                  key={message.id}
+                  className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
+                >
+                  <div
+                    className={`max-w-[80%] p-3 rounded-lg ${
+                      message.type === 'user'
+                        ? 'bg-primary text-primary-foreground ml-4'
+                        : 'bg-muted mr-4'
+                    }`}
+                  >
+                    <div className="flex items-start gap-2">
+                      {message.type === 'ai' && <Bot className="h-5 w-5 mt-0.5 text-muted-foreground" />}
+                      {message.type === 'user' && <User className="h-5 w-5 mt-0.5" />}
+                      <div className="flex-1">
+                        <p className="text-sm">{message.content}</p>
+                        {message.score && (
+                          <Badge className="mt-2" variant="secondary">
+                            점수: {message.score}점
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* 입력 영역 */}
+            <div className="border-t p-4">
+              <div className="flex gap-2">
+                <Input
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  placeholder="답변을 입력하세요..."
+                  onKeyPress={(e) => e.key === 'Enter' && !isAiSpeaking && handleSendMessage()}
+                  className="flex-1"
+                  disabled={isAiSpeaking || settings.mode === 'voice'}
+                />
+                {settings.mode === 'chat' && (
+                  <Button 
+                    onClick={handleSendMessage} 
+                    disabled={!inputValue.trim() || isAiSpeaking}
+                  >
+                    <Send className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* 음성 녹음 모달 */}
-      <Dialog open={showVoiceModal} onOpenChange={setShowVoiceModal}>
+      <Dialog open={showVoiceModal} onOpenChange={() => {}}>
         <DialogContent className="text-center">
           <DialogHeader>
             <DialogTitle>답변을 말씀하세요</DialogTitle>
@@ -330,12 +395,8 @@ export function InterviewSession({ documentData, settings, onComplete }: Intervi
             <p className="text-3xl font-bold text-red-600">{formatTime(voiceTimeLeft)}</p>
             <Progress value={((settings.maxSpeakingTime! - voiceTimeLeft) / settings.maxSpeakingTime!) * 100} className="mt-4" />
           </div>
-          <Button onClick={() => {
-            setShowVoiceModal(false);
-            setIsRecording(false);
-            handleVoiceComplete();
-          }}>
-            녹음 중지
+          <Button onClick={handleVoiceComplete}>
+            답변 완료
           </Button>
         </DialogContent>
       </Dialog>
