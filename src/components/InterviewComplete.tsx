@@ -1,8 +1,7 @@
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Trophy, Star, Archive, Home } from 'lucide-react';
+import { Trophy, Archive, Home } from 'lucide-react';
 
 interface InterviewCompleteProps {
   score: number;
@@ -48,21 +47,6 @@ export function InterviewComplete({ score, onSaveToArchive, onHome }: InterviewC
             <p className={`text-lg font-medium mt-2 ${getScoreColor(score)}`}>
               {getScoreText(score)}
             </p>
-          </div>
-
-          <div className="flex justify-center">
-            <div className="flex gap-1">
-              {Array.from({ length: 5 }, (_, i) => (
-                <Star
-                  key={i}
-                  className={`h-6 w-6 ${
-                    i < Math.floor(score / 20)
-                      ? 'text-yellow-400 fill-current'
-                      : 'text-gray-300'
-                  }`}
-                />
-              ))}
-            </div>
           </div>
 
           <div className="space-y-3">

@@ -2,7 +2,6 @@
 import { useState } from 'react';
 import { ThemeProvider } from '@/components/ThemeProvider';
 import { Header } from '@/components/Header';
-import { Navigation } from '@/components/Navigation';
 import { ModeSelection } from '@/components/ModeSelection';
 import { DocumentInput } from '@/components/DocumentInput';
 import { PracticeSettings } from '@/components/PracticeSettings';
@@ -10,6 +9,11 @@ import { InterviewSettings } from '@/components/InterviewSettings';
 import { PracticeSession } from '@/components/PracticeSession';
 import { InterviewSession } from '@/components/InterviewSession';
 import { InterviewComplete } from '@/components/InterviewComplete';
+import { ArchivePage } from '@/components/ArchivePage';
+import { DocumentsPage } from '@/components/DocumentsPage';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { AlertTriangle } from 'lucide-react';
 
 type DocumentData = {
   type: 'link' | 'text';
@@ -35,6 +39,8 @@ const Index = () => {
   const [practiceSettings, setPracticeSettings] = useState<PracticeSettingsData | null>(null);
   const [interviewSettings, setInterviewSettings] = useState<InterviewSettingsData | null>(null);
   const [interviewScore, setInterviewScore] = useState<number | null>(null);
+  const [showExitModal, setShowExitModal] = useState(false);
+  const [pendingView, setPendingView] = useState<string | null>(null);
 
   const handleModeSelect = (mode: 'practice' | 'interview') => {
     setCurrentMode(mode);
@@ -76,7 +82,19 @@ const Index = () => {
   };
 
   const handleSaveToArchive = () => {
-    // TODO: 아카이브에 저장 로직
+    // 아카이브에 저장
+    const archiveData = {
+      id: Date.now().toString(),
+      date: new Date().toISOString(),
+      score: interviewScore!,
+      documentData: documentData!,
+      settings: interviewSettings!
+    };
+    
+    const existingArchive = JSON.parse(localStorage.getItem('interview-archive') || '[]');
+    existingArchive.push(archiveData);
+    localStorage.setItem('interview-archive', JSON.stringify(existingArchive));
+    
     console.log('Saving to archive with score:', interviewScore);
     setCurrentView('archive');
   };
@@ -98,6 +116,38 @@ const Index = () => {
     } else if (currentView === 'practice-settings' || currentView === 'interview-settings') {
       setCurrentView('document-input');
     }
+  };
+
+  const handleNavigationChange = (view: string) => {
+    // 면접이나 연습 중일 때 경고 표시
+    if (currentView === 'practice' || currentView === 'interview') {
+      setPendingView(view);
+      setShowExitModal(true);
+    } else {
+      setCurrentView(view);
+      // 상태 초기화
+      if (view === 'home') {
+        setCurrentMode(null);
+        setDocumentData(null);
+        setPracticeSettings(null);
+        setInterviewSettings(null);
+        setInterviewScore(null);
+      }
+    }
+  };
+
+  const confirmExit = () => {
+    if (pendingView) {
+      setCurrentView(pendingView);
+      setPendingView(null);
+      // 상태 초기화
+      setCurrentMode(null);
+      setDocumentData(null);
+      setPracticeSettings(null);
+      setInterviewSettings(null);
+      setInterviewScore(null);
+    }
+    setShowExitModal(false);
   };
 
   const renderContent = () => {
@@ -135,18 +185,9 @@ const Index = () => {
           />
         );
       case 'documents':
+        return <DocumentsPage />;
       case 'archive':
-        return (
-          <div className="container max-w-4xl mx-auto py-8">
-            <div className="text-center">
-              <h2 className="text-2xl font-bold mb-4">
-                {currentView === 'documents' && '문서 저장소'}
-                {currentView === 'archive' && '아카이브'}
-              </h2>
-              <p className="text-muted-foreground">곧 구현될 예정입니다.</p>
-            </div>
-          </div>
-        );
+        return <ArchivePage />;
       default:
         return <ModeSelection onModeSelect={handleModeSelect} />;
     }
@@ -155,17 +196,34 @@ const Index = () => {
   return (
     <ThemeProvider defaultTheme="light" storageKey="interview-app-theme">
       <div className="min-h-screen bg-background">
-        <Header />
-        <div className="flex">
-          {(currentView === 'practice' || currentView === 'interview' || currentView === 'documents' || currentView === 'archive') ? (
-            <aside className="w-64 p-4 border-r">
-              <Navigation currentView={currentView} onViewChange={setCurrentView} />
-            </aside>
-          ) : null}
-          <main className="flex-1">
-            {renderContent()}
-          </main>
-        </div>
+        <Header currentView={currentView} onViewChange={handleNavigationChange} />
+        <main className="flex-1">
+          {renderContent()}
+        </main>
+        
+        {/* 종료 확인 모달 */}
+        <Dialog open={showExitModal} onOpenChange={setShowExitModal}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5 text-amber-500" />
+                진행 중인 세션이 있습니다
+              </DialogTitle>
+              <DialogDescription>
+                현재 진행 중인 면접/연습이 종료됩니다. 진행 상황은 저장되지 않습니다. 
+                정말로 나가시겠습니까?
+              </DialogDescription>
+            </DialogHeader>
+            <div className="flex justify-end gap-2 mt-4">
+              <Button variant="outline" onClick={() => setShowExitModal(false)}>
+                취소
+              </Button>
+              <Button variant="destructive" onClick={confirmExit}>
+                나가기
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </ThemeProvider>
   );

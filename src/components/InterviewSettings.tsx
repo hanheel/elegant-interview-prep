@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Clock, MessageCircle, Mic, User, Briefcase } from 'lucide-react';
 
@@ -20,7 +21,7 @@ export function InterviewSettings({ onStart, onBack }: InterviewSettingsProps) {
   const [duration, setDuration] = useState(10);
   const [speakingStyle, setSpeakingStyle] = useState<'friend' | 'interviewer'>('interviewer');
   const [mode, setMode] = useState<'voice' | 'chat'>('chat');
-  const [maxSpeakingTime, setMaxSpeakingTime] = useState(2);
+  const [maxSpeakingTime, setMaxSpeakingTime] = useState(60);
 
   const durationOptions = [
     { value: 5, label: '5분' },
@@ -32,13 +33,13 @@ export function InterviewSettings({ onStart, onBack }: InterviewSettingsProps) {
     {
       value: 'friend',
       label: '비개발자 친구',
-      description: '친근하고 이해하기 쉽게 설명을 요구하는 스타일',
+      description: '친근하고 이해하기 쉽게 설명을 요구하는 스타일로 존댓말 사용',
       icon: User
     },
     {
       value: 'interviewer',
       label: '면접관',
-      description: '전문적이고 체계적인 답변을 요구하는 스타일',
+      description: '전문적이고 체계적인 답변을 요구하는 스타일로 존댓말 사용',
       icon: Briefcase
     }
   ];
@@ -151,19 +152,19 @@ export function InterviewSettings({ onStart, onBack }: InterviewSettingsProps) {
 
           {mode === 'voice' && (
             <div className="space-y-3 p-4 bg-muted rounded-lg">
-              <Label>최대 답변 시간 (분)</Label>
-              <div className="flex gap-2">
-                {[1, 2].map((time) => (
-                  <Button
-                    key={time}
-                    variant={maxSpeakingTime === time ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setMaxSpeakingTime(time)}
-                  >
-                    {time}분
-                  </Button>
-                ))}
-              </div>
+              <Label>최대 답변 시간</Label>
+              <Select value={maxSpeakingTime.toString()} onValueChange={(value) => setMaxSpeakingTime(parseInt(value))}>
+                <SelectTrigger>
+                  <SelectValue placeholder="답변 시간 선택" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Array.from({ length: 12 }, (_, i) => (i + 1) * 10).map((seconds) => (
+                    <SelectItem key={seconds} value={seconds.toString()}>
+                      {seconds}초
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           )}
 
