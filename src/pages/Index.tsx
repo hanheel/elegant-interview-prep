@@ -119,14 +119,14 @@ const Index = () => {
       documentData: documentData!,
       settings: interviewSettings!,
       chatHistory: chatHistory,
-      document: document // AI 생성 문서 추가
+      document: document // AI 생성 학습 문서 추가
     };
     
     const existingArchive = JSON.parse(localStorage.getItem('interview-archive') || '[]');
     existingArchive.push(archiveData);
     localStorage.setItem('interview-archive', JSON.stringify(existingArchive));
     
-    console.log('Saving to archive with document:', document ? 'Generated' : 'None');
+    console.log('Saving to archive with learning document:', document ? 'Generated' : 'None');
     setCurrentView('archive');
   };
 
@@ -211,6 +211,7 @@ const Index = () => {
         return (
           <InterviewComplete
             score={interviewScore!}
+            chatHistory={chatHistory}
             onSaveToArchive={handleSaveToArchive}
             onHome={handleBackToHome}
           />

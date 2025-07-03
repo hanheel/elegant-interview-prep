@@ -121,6 +121,62 @@ const mockPracticeDocuments = [
 꾸준한 연습과 학습을 통해 더욱 성장할 수 있을 것입니다. 화이팅!`
 ];
 
+const generatePracticeLearningDocument = (questionIndex: number, settings: any) => {
+  return `# 연습 학습 기록
+
+## 학습 개요
+- **학습 일시**: ${new Date().toLocaleDateString('ko-KR')}
+- **연습 유형**: 기술 면접 연습 (${settings.difficulty === 'easy' ? '기초' : settings.difficulty === 'medium' ? '중급' : '고급'} 수준)
+- **완료한 문제**: ${questionIndex + 1}/${settings.questionCount}개
+- **평균 점수**: ${85 + Math.floor(Math.random() * 15)}점
+
+## 학습 내용 정리
+
+### 문제 1: HTML과 CSS의 차이점
+**질문**: "HTML과 CSS의 차이점을 설명해주세요."
+
+**학습자 답변**: "HTML은 웹페이지의 구조와 내용을 정의하는 마크업 언어이고, CSS는 HTML 요소들의 스타일과 레이아웃을 담당합니다..."
+
+**핵심 학습 포인트**:
+- HTML의 시맨틱 구조에 대한 이해
+- CSS의 스타일링 역할과 중요성
+- 두 언어의 협력적 관계
+
+**꼬리 질문**: "실제 프로젝트에서 어떻게 적용해보셨나요?"
+
+**답변**: "최근 프로젝트에서 시맨틱 HTML을 사용하여 접근성을 개선하고, CSS Grid와 Flexbox를 활용하여 반응형 레이아웃을 구현했습니다..."
+
+### 문제 2: JavaScript 변수 선언 방법
+**질문**: "JavaScript의 변수 선언 방법들을 비교해주세요."
+
+**학습자 답변**: "var, let, const 세 가지 방법이 있으며, var는 함수 스코프, let과 const는 블록 스코프를 가집니다..."
+
+**핵심 학습 포인트**:
+- 스코프의 차이점과 호이스팅
+- const의 불변성과 활용 방법
+- 모던 JavaScript에서의 권장 사용법
+
+## 학습 성과 분석
+
+### 이번 연습에서 잘한 점
+1. **기본 개념 이해**: 핵심 개념들을 정확히 파악하고 설명
+2. **실무 연결**: 이론적 지식을 실제 프로젝트 경험과 연결
+3. **논리적 구성**: 답변을 체계적으로 구성하여 전달
+
+### 더 발전시킬 영역
+1. **심화 학습**: 기본기를 바탕으로 고급 주제 학습 필요
+2. **최신 트렌드**: 새로운 기술과 패러다임에 대한 지속적 학습
+3. **실무 사례**: 더 다양한 프로젝트 경험 축적
+
+## 다음 학습 계획
+- ${settings.difficulty === 'easy' ? '중급' : settings.difficulty === 'medium' ? '고급' : '실무'} 수준 문제 도전
+- 시스템 설계 및 아키텍처 학습
+- 알고리즘과 자료구조 복습
+
+## 학습 후기
+기초가 탄탄하게 다져져 있어 더 높은 수준으로 발전할 준비가 되었습니다. 꾸준한 연습을 통해 목표를 달성해 나가시기 바랍니다!`;
+};
+
 export function PracticeSession({ documentData, settings, onComplete }: PracticeSessionProps) {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answer, setAnswer] = useState('');
@@ -186,14 +242,14 @@ export function PracticeSession({ documentData, settings, onComplete }: Practice
     // 3초 후 문서 생성 완료
     setTimeout(() => {
       const averageScore = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
-      const randomDocument = mockPracticeDocuments[Math.floor(Math.random() * mockPracticeDocuments.length)];
+      const learningDocument = generatePracticeLearningDocument(currentQuestionIndex, settings);
       
       const practiceData = {
         score: averageScore,
         questionsAnswered: currentQuestionIndex + 1,
         averageScore,
         totalTime: 0,
-        document: randomDocument
+        document: learningDocument
       };
       
       setIsGeneratingDocument(false);
@@ -231,9 +287,9 @@ export function PracticeSession({ documentData, settings, onComplete }: Practice
                 <Loader2 className="h-8 w-8 text-primary/60 animate-spin absolute top-2 left-2" />
               </div>
             </div>
-            <h2 className="text-2xl font-bold mb-4">AI가 연습 내용을 문서화 중입니다</h2>
+            <h2 className="text-2xl font-bold mb-4">AI가 학습 내용을 문서화 중입니다</h2>
             <p className="text-muted-foreground mb-4">
-              연습 결과를 분석하여 상세한 분석 리포트를 생성하고 있습니다...
+              연습 내용을 분석하여 학습 문서를 생성하고 있습니다...
             </p>
             <div className="flex justify-center">
               <div className="animate-pulse flex space-x-1">
@@ -390,23 +446,23 @@ export function PracticeSession({ documentData, settings, onComplete }: Practice
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Sparkles className="h-5 w-5 text-primary" />
-              연습 완료! AI 문서화 후 저장하시겠습니까?
+              연습 완료! AI 학습 문서화 후 저장하시겠습니까?
             </DialogTitle>
             <DialogDescription>
-              연습 결과를 AI가 분석하여 상세한 리포트로 문서화한 후 아카이브에 저장합니다.
+              연습 내용을 AI가 분석하여 학습 문서로 정리한 후 아카이브에 저장합니다.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="bg-muted p-4 rounded-lg">
               <h4 className="font-semibold mb-2 flex items-center gap-2">
                 <FileText className="h-4 w-4" />
-                생성될 분석 리포트 내용:
+                생성될 학습 문서 내용:
               </h4>
               <ul className="text-sm text-muted-foreground space-y-1">
-                <li>• 문제별 상세 분석 및 점수</li>
-                <li>• 전체적인 강점과 개선점</li>
-                <li>• 개인화된 학습 방향 제시</li>
-                <li>• 다음 연습 단계 추천</li>
+                <li>• 연습 질문과 답변 내용 정리</li>
+                <li>• 핵심 학습 포인트 추출</li>
+                <li>• 잘한 점과 발전 영역 분석</li>
+                <li>• 개인화된 다음 학습 계획</li>
               </ul>
             </div>
             <div className="flex justify-end gap-2">
@@ -415,7 +471,7 @@ export function PracticeSession({ documentData, settings, onComplete }: Practice
               </Button>
               <Button onClick={handleSavePractice} className="flex items-center gap-2">
                 <Sparkles className="h-4 w-4" />
-                AI 문서화 후 저장
+                학습 문서화 후 저장
               </Button>
             </div>
           </div>

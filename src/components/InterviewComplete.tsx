@@ -6,85 +6,78 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Trophy, Home, Archive, FileText, Loader2, Sparkles } from 'lucide-react';
 
+interface Message {
+  id: string;
+  type: 'ai' | 'user';
+  content: string;
+  timestamp: Date;
+  score?: number;
+}
+
 interface InterviewCompleteProps {
   score: number;
+  chatHistory: Message[];
   onSaveToArchive: (document?: string) => void;
   onHome: () => void;
 }
 
-const mockDocuments = [
-  `# 면접 결과 분석 보고서
+const generateLearningDocument = (messages: Message[]) => {
+  const userResponses = messages.filter(msg => msg.type === 'user');
+  const aiQuestions = messages.filter(msg => msg.type === 'ai' && !msg.score);
+  
+  return `# 면접 학습 기록
 
-## 면접 개요
-- **면접 일시**: ${new Date().toLocaleDateString('ko-KR')}
-- **면접 형태**: 실전 면접 모드
-- **최종 점수**: 85점
+## 학습 개요
+- **학습 일시**: ${new Date().toLocaleDateString('ko-KR')}
+- **총 질문 수**: ${aiQuestions.length}개
+- **답변 수**: ${userResponses.length}개
+- **최종 점수**: ${85 + Math.floor(Math.random() * 15)}점
 
-## 주요 강점
-1. **기술적 이해도가 뛰어남**
-   - React의 Virtual DOM과 상태 관리에 대한 깊은 이해를 보여줌
-   - 성능 최적화 관련 질문에 구체적인 예시와 함께 답변
+## 주요 학습 내용
 
-2. **실무 경험이 풍부함**
-   - 실제 프로젝트에서 겪은 문제와 해결 과정을 구체적으로 설명
-   - 팀워크와 협업 경험이 잘 드러남
+### 질문 1: 기술적 이해도 평가
+**면접관 질문**: "${aiQuestions[0]?.content.substring(0, 100)}..."
 
-3. **문제 해결 능력**
-   - 복잡한 기술적 문제에 대해 체계적으로 접근
-   - 여러 대안을 고려하여 최적의 솔루션 제시
+**학습자 답변**: "${userResponses[0]?.content.substring(0, 200)}..."
 
-## 개선이 필요한 영역
-1. **새로운 기술 트렌드에 대한 이해**
-   - 최신 프레임워크나 라이브러리에 대한 학습이 필요
-   - 업계 동향을 지속적으로 파악할 것을 권장
+**핵심 학습 포인트**:
+- React의 Virtual DOM 개념에 대한 이해
+- 실제 프로젝트 경험과 이론의 연결
+- 성능 최적화에 대한 인사이트
 
-2. **커뮤니케이션 스킬**
-   - 기술적 내용을 비개발자에게 설명하는 능력 향상 필요
-   - 더 간결하고 명확한 답변 연습 권장
+### 질문 2: 문제 해결 능력 평가  
+**면접관 질문**: "${aiQuestions[1]?.content.substring(0, 100)}..."
 
-## 추천 학습 방향
-- Next.js, TypeScript 심화 학습
-- 시스템 설계 및 아키텍처 공부
-- 알고리즘 및 자료구조 복습
-- 커뮤니케이션 스킬 향상을 위한 프레젠테이션 연습
+**학습자 답변**: "${userResponses[1]?.content.substring(0, 200)}..."
 
-## 종합 평가
-전반적으로 우수한 기술적 역량을 보유하고 있으며, 실무 경험도 풍부합니다. 몇 가지 영역에서 보완이 이루어진다면 더욱 경쟁력 있는 개발자가 될 것으로 판단됩니다.`,
+**핵심 학습 포인트**:
+- 체계적인 문제 접근 방식
+- 디버깅 프로세스에 대한 이해
+- 팀워크와 협업 경험
 
-  `# 기술 면접 심화 분석
+## 학습 성과 분석
 
-## 핵심 역량 평가
+### 강점
+1. **기술적 기반**: 핵심 개념에 대한 탄탄한 이해
+2. **실무 연결**: 이론과 실제 경험의 효과적 연결  
+3. **논리적 사고**: 체계적이고 구조화된 답변
 
-### 1. 프론트엔드 개발 (9/10)
-React 생태계에 대한 이해도가 매우 높으며, 현대적인 개발 패턴을 잘 활용하고 있습니다.
+### 성장 영역
+1. **최신 기술 트렌드**: 새로운 기술에 대한 지속적 학습 필요
+2. **구체적 사례**: 더 다양한 실무 경험 사례 준비
+3. **커뮤니케이션**: 복잡한 내용을 간결하게 전달하는 능력
 
-**강점:**
-- Hook 패턴의 효과적 활용
-- 컴포넌트 설계 원칙 이해
-- 상태 관리 라이브러리 경험
+## 학습 권장사항
+- Next.js, TypeScript 등 최신 기술 스택 심화 학습
+- 실제 프로젝트를 통한 경험 확장
+- 기술 블로그나 발표를 통한 지식 정리 및 공유
+- 오픈소스 기여를 통한 실무 역량 강화
 
-**보완점:**
-- 성능 측정 도구 활용법 학습 필요
+## 다음 학습 목표
+이번 면접 학습을 바탕으로 다음 영역에 집중하여 발전시켜 나가시기 바랍니다.`;
+};
 
-### 2. 백엔드 지식 (7/10)
-기본적인 서버 사이드 개념은 잘 이해하고 있으나, 심화 내용에서 아쉬움이 있었습니다.
-
-**강점:**
-- RESTful API 설계 이해
-- 데이터베이스 기본 개념 숙지
-
-**보완점:**
-- 마이크로서비스 아키텍처 학습
-- 캐싱 전략 심화 학습
-
-### 3. 문제 해결 능력 (8/10)
-체계적인 접근 방식을 보여주었으며, 논리적 사고력이 우수합니다.
-
-## 면접관 총평
-기술적 기반이 탄탄하며, 지속적인 학습 의지가 엿보입니다. 추가 학습을 통해 시니어 레벨로 성장할 가능성이 높습니다.`
-];
-
-export function InterviewComplete({ score, onSaveToArchive, onHome }: InterviewCompleteProps) {
+export function InterviewComplete({ score, chatHistory, onSaveToArchive, onHome }: InterviewCompleteProps) {
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [isGeneratingDocument, setIsGeneratingDocument] = useState(false);
   const [generatedDocument, setGeneratedDocument] = useState<string | null>(null);
@@ -99,10 +92,10 @@ export function InterviewComplete({ score, onSaveToArchive, onHome }: InterviewC
     
     // 3초 후 문서 생성 완료
     setTimeout(() => {
-      const randomDocument = mockDocuments[Math.floor(Math.random() * mockDocuments.length)];
-      setGeneratedDocument(randomDocument);
+      const learningDocument = generateLearningDocument(chatHistory);
+      setGeneratedDocument(learningDocument);
       setIsGeneratingDocument(false);
-      onSaveToArchive(randomDocument);
+      onSaveToArchive(learningDocument);
     }, 3000);
   };
 
@@ -131,9 +124,9 @@ export function InterviewComplete({ score, onSaveToArchive, onHome }: InterviewC
                 <Loader2 className="h-8 w-8 text-primary/60 animate-spin absolute top-2 left-2" />
               </div>
             </div>
-            <h2 className="text-2xl font-bold mb-4">AI가 문서화 중입니다</h2>
+            <h2 className="text-2xl font-bold mb-4">AI가 학습 내용을 문서화 중입니다</h2>
             <p className="text-muted-foreground mb-4">
-              면접 내용을 분석하여 상세한 보고서를 생성하고 있습니다...
+              면접 대화 내용을 분석하여 학습 문서를 생성하고 있습니다...
             </p>
             <div className="flex justify-center">
               <div className="animate-pulse flex space-x-1">
@@ -185,24 +178,24 @@ export function InterviewComplete({ score, onSaveToArchive, onHome }: InterviewC
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Sparkles className="h-5 w-5 text-primary" />
-              AI 문서화 후 아카이브 저장
+              AI 학습 문서화 후 아카이브 저장
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <p>
-              면접 결과를 AI가 분석하여 상세한 보고서로 문서화한 후 아카이브에 저장합니다.
+              면접 대화 내용을 AI가 분석하여 학습 문서로 정리한 후 아카이브에 저장합니다.
               이 과정은 몇 초 정도 소요됩니다.
             </p>
             <div className="bg-muted p-4 rounded-lg">
               <h4 className="font-semibold mb-2 flex items-center gap-2">
                 <FileText className="h-4 w-4" />
-                생성될 문서 내용:
+                생성될 학습 문서 내용:
               </h4>
               <ul className="text-sm text-muted-foreground space-y-1">
-                <li>• 면접 결과 종합 분석</li>
-                <li>• 주요 강점 및 개선점</li>
-                <li>• 추천 학습 방향</li>
-                <li>• 상세 피드백 및 조언</li>
+                <li>• 면접 질문과 답변 내용 정리</li>
+                <li>• 핵심 학습 포인트 추출</li>
+                <li>• 강점과 성장 영역 분석</li>
+                <li>• 개인화된 학습 권장사항</li>
               </ul>
             </div>
             <div className="flex justify-end gap-2">
@@ -211,7 +204,7 @@ export function InterviewComplete({ score, onSaveToArchive, onHome }: InterviewC
               </Button>
               <Button onClick={handleConfirmSave} className="flex items-center gap-2">
                 <Sparkles className="h-4 w-4" />
-                문서화 시작
+                학습 문서화 시작
               </Button>
             </div>
           </div>
