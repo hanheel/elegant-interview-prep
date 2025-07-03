@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { ThemeProvider } from '@/components/ThemeProvider';
 import { Header } from '@/components/Header';
@@ -86,14 +85,15 @@ const Index = () => {
         score: practiceData.score,
         documentData: documentData!,
         settings: practiceSettings!,
-        practiceData
+        practiceData,
+        document: practiceData.document // AI 생성 문서 추가
       };
       
       const existingArchive = JSON.parse(localStorage.getItem('interview-archive') || '[]');
       existingArchive.push(archiveData);
       localStorage.setItem('interview-archive', JSON.stringify(existingArchive));
       
-      console.log('Saving practice to archive with score:', practiceData.score);
+      console.log('Saving practice to archive with document:', practiceData.document ? 'Generated' : 'None');
     }
     
     setCurrentView('home');
@@ -109,7 +109,7 @@ const Index = () => {
     setCurrentView('interview-complete');
   };
 
-  const handleSaveToArchive = () => {
+  const handleSaveToArchive = (document?: string) => {
     // 아카이브에 저장
     const archiveData = {
       id: Date.now().toString(),
@@ -118,14 +118,15 @@ const Index = () => {
       score: interviewScore!,
       documentData: documentData!,
       settings: interviewSettings!,
-      chatHistory: chatHistory
+      chatHistory: chatHistory,
+      document: document // AI 생성 문서 추가
     };
     
     const existingArchive = JSON.parse(localStorage.getItem('interview-archive') || '[]');
     existingArchive.push(archiveData);
     localStorage.setItem('interview-archive', JSON.stringify(existingArchive));
     
-    console.log('Saving to archive with score:', interviewScore);
+    console.log('Saving to archive with document:', document ? 'Generated' : 'None');
     setCurrentView('archive');
   };
 

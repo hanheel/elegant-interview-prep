@@ -1,4 +1,3 @@
-
 import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,7 +5,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { CheckCircle, AlertCircle, ArrowRight } from 'lucide-react';
+import { CheckCircle, AlertCircle, ArrowRight, Sparkles, Loader2, FileText } from 'lucide-react';
 
 interface PracticeSessionProps {
   documentData: { type: 'link' | 'text'; content: string };
@@ -47,6 +46,81 @@ const mockFollowUpQuestions = [
   "성능상 고려해야 할 점이 있다면 무엇인가요?"
 ];
 
+const mockPracticeDocuments = [
+  `# 연습 세션 분석 리포트
+
+## 연습 개요
+- **연습 일시**: ${new Date().toLocaleDateString('ko-KR')}
+- **연습 유형**: 기술 면접 연습
+- **문제 수**: 5문제
+- **평균 점수**: 87점
+
+## 문제별 분석
+
+### 1. HTML과 CSS의 차이점
+**답변 점수**: 90점
+- 핵심 개념을 정확히 이해하고 있음
+- 구체적인 예시를 들어 설명한 점이 좋음
+- **개선점**: 실무 활용 경험 추가 설명 권장
+
+### 2. JavaScript 변수 선언 방법
+**답변 점수**: 85점  
+- var, let, const의 차이점을 명확히 설명
+- 호이스팅 개념도 잘 이해하고 있음
+- **개선점**: 실제 프로젝트 적용 사례 언급하면 더 좋음
+
+### 3. 함수형 프로그래밍
+**답변 점수**: 88점
+- 불변성과 순수 함수 개념을 정확히 설명
+- 장단점을 균형 있게 제시
+- **개선점**: 구체적인 라이브러리 예시 추가
+
+## 전체적인 강점
+1. **기초 개념 탄탄함**: 기본기가 잘 갖춰져 있음
+2. **논리적 사고**: 체계적으로 답변을 구성함  
+3. **학습 의지**: 추가 질문에도 적극적으로 대답
+
+## 개선 방향
+1. **실무 경험 연결**: 이론과 실무를 더 연결하여 설명
+2. **최신 트렌드 학습**: 새로운 기술 동향 파악 필요
+3. **심화 학습**: 기본기를 바탕으로 고급 주제 학습
+
+## 다음 연습 추천
+- 중급 난이도 문제로 도전
+- 시스템 설계 관련 문제 연습
+- 알고리즘 문제 해결 능력 향상
+
+## 종합 평가
+기초가 탄탄하고 학습 태도가 좋습니다. 꾸준한 연습을 통해 더욱 발전할 수 있을 것으로 기대됩니다.`,
+
+  `# 기술 연습 세션 상세 분석
+
+## 연습 성과 요약
+이번 연습에서는 전반적으로 우수한 성과를 보여주었습니다.
+
+### 핵심 역량 평가
+- **기술적 이해도**: 9/10
+- **설명 능력**: 8/10  
+- **논리적 사고**: 9/10
+- **실무 연결성**: 7/10
+
+### 인상 깊었던 답변들
+1. **REST API 설명**: 실제 프로젝트 경험과 연결하여 구체적으로 설명
+2. **Git 명령어**: 각 명령어의 사용 시나리오를 명확히 제시
+3. **함수형 프로그래밍**: 복잡한 개념을 쉽게 풀어서 설명
+
+### 성장 포인트
+- 최신 기술 트렌드에 대한 관심 증대 필요
+- 실무 프로젝트 경험을 더 적극적으로 활용
+- 꼬리 질문에 대한 대응 능력 향상
+
+### 추천 학습 계획
+다음 단계로 중급 수준의 문제들에 도전해보시기 바랍니다. 특히 시스템 설계와 성능 최적화 분야의 학습을 권장합니다.
+
+## 마무리
+꾸준한 연습과 학습을 통해 더욱 성장할 수 있을 것입니다. 화이팅!`
+];
+
 export function PracticeSession({ documentData, settings, onComplete }: PracticeSessionProps) {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answer, setAnswer] = useState('');
@@ -55,6 +129,7 @@ export function PracticeSession({ documentData, settings, onComplete }: Practice
   const [showFollowUp, setShowFollowUp] = useState(false);
   const [showFollowUpFeedback, setShowFollowUpFeedback] = useState(false);
   const [showSaveModal, setShowSaveModal] = useState(false);
+  const [isGeneratingDocument, setIsGeneratingDocument] = useState(false);
   const [scores, setScores] = useState<number[]>([]);
   
   // 질문과 꼬리질문을 고정하기 위한 ref 사용
@@ -105,14 +180,25 @@ export function PracticeSession({ documentData, settings, onComplete }: Practice
   };
 
   const handleSavePractice = () => {
-    const averageScore = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
-    const practiceData = {
-      score: averageScore,
-      questionsAnswered: currentQuestionIndex + 1,
-      averageScore,
-      totalTime: 0 // 연습 모드는 시간 제한이 없음
-    };
-    onComplete(practiceData);
+    setShowSaveModal(false);
+    setIsGeneratingDocument(true);
+    
+    // 3초 후 문서 생성 완료
+    setTimeout(() => {
+      const averageScore = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
+      const randomDocument = mockPracticeDocuments[Math.floor(Math.random() * mockPracticeDocuments.length)];
+      
+      const practiceData = {
+        score: averageScore,
+        questionsAnswered: currentQuestionIndex + 1,
+        averageScore,
+        totalTime: 0,
+        document: randomDocument
+      };
+      
+      setIsGeneratingDocument(false);
+      onComplete(practiceData);
+    }, 3000);
   };
 
   const handleSkipSave = () => {
@@ -133,6 +219,34 @@ export function PracticeSession({ documentData, settings, onComplete }: Practice
       ]
     };
   };
+
+  if (isGeneratingDocument) {
+    return (
+      <div className="container max-w-2xl mx-auto py-16">
+        <Card>
+          <CardContent className="text-center py-12">
+            <div className="flex justify-center mb-4">
+              <div className="relative">
+                <Sparkles className="h-12 w-12 text-primary animate-pulse" />
+                <Loader2 className="h-8 w-8 text-primary/60 animate-spin absolute top-2 left-2" />
+              </div>
+            </div>
+            <h2 className="text-2xl font-bold mb-4">AI가 연습 내용을 문서화 중입니다</h2>
+            <p className="text-muted-foreground mb-4">
+              연습 결과를 분석하여 상세한 분석 리포트를 생성하고 있습니다...
+            </p>
+            <div className="flex justify-center">
+              <div className="animate-pulse flex space-x-1">
+                <div className="h-2 w-2 bg-primary rounded-full"></div>
+                <div className="h-2 w-2 bg-primary rounded-full animation-delay-200"></div>
+                <div className="h-2 w-2 bg-primary rounded-full animation-delay-400"></div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   const progress = ((currentQuestionIndex + (showFollowUpFeedback ? 1 : 0)) / settings.questionCount) * 100;
 
@@ -274,19 +388,36 @@ export function PracticeSession({ documentData, settings, onComplete }: Practice
       <Dialog open={showSaveModal} onOpenChange={() => {}}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>연습 완료!</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-primary" />
+              연습 완료! AI 문서화 후 저장하시겠습니까?
+            </DialogTitle>
             <DialogDescription>
-              연습 결과를 아카이브에 저장하시겠습니까? 
-              저장하시면 나중에 연습 기록을 다시 확인하실 수 있습니다.
+              연습 결과를 AI가 분석하여 상세한 리포트로 문서화한 후 아카이브에 저장합니다.
             </DialogDescription>
           </DialogHeader>
-          <div className="flex justify-end gap-2 mt-4">
-            <Button variant="outline" onClick={handleSkipSave}>
-              저장하지 않기
-            </Button>
-            <Button onClick={handleSavePractice}>
-              아카이브에 저장
-            </Button>
+          <div className="space-y-4">
+            <div className="bg-muted p-4 rounded-lg">
+              <h4 className="font-semibold mb-2 flex items-center gap-2">
+                <FileText className="h-4 w-4" />
+                생성될 분석 리포트 내용:
+              </h4>
+              <ul className="text-sm text-muted-foreground space-y-1">
+                <li>• 문제별 상세 분석 및 점수</li>
+                <li>• 전체적인 강점과 개선점</li>
+                <li>• 개인화된 학습 방향 제시</li>
+                <li>• 다음 연습 단계 추천</li>
+              </ul>
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={handleSkipSave}>
+                저장하지 않기
+              </Button>
+              <Button onClick={handleSavePractice} className="flex items-center gap-2">
+                <Sparkles className="h-4 w-4" />
+                AI 문서화 후 저장
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
