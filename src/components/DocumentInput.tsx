@@ -17,9 +17,31 @@ export function DocumentInput({ onContinue, onBack }: DocumentInputProps) {
   const [linkUrl, setLinkUrl] = useState('');
   const [textContent, setTextContent] = useState('');
   const [activeTab, setActiveTab] = useState('link');
+  const [linkError, setLinkError] = useState('');
+
+  const isValidUrl = (url: string) => {
+    try {
+      const urlObj = new URL(url);
+      return urlObj.protocol === 'http:' || urlObj.protocol === 'https:';
+    } catch {
+      return false;
+    }
+  };
+
+  const handleLinkChange = (value: string) => {
+    setLinkUrl(value);
+    if (value.trim() && !isValidUrl(value)) {
+      setLinkError('올바른 URL 형식을 입력해주세요. (예: https://example.com)');
+    } else {
+      setLinkError('');
+    }
+  };
 
   const canContinue = () => {
-    return activeTab === 'link' ? linkUrl.trim() !== '' : textContent.trim() !== '';
+    if (activeTab === 'link') {
+      return linkUrl.trim() !== '' && isValidUrl(linkUrl) && !linkError;
+    }
+    return textContent.trim() !== '';
   };
 
   const handleContinue = () => {
@@ -57,8 +79,12 @@ export function DocumentInput({ onContinue, onBack }: DocumentInputProps) {
                   id="link-input"
                   placeholder="https://notion.so/... 또는 https://blog.example.com/..."
                   value={linkUrl}
-                  onChange={(e) => setLinkUrl(e.target.value)}
+                  onChange={(e) => handleLinkChange(e.target.value)}
+                  className={linkError ? 'border-red-500' : ''}
                 />
+                {linkError && (
+                  <p className="text-sm text-red-500 mt-1">{linkError}</p>
+                )}
               </div>
             </TabsContent>
             

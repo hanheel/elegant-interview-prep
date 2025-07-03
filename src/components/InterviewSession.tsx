@@ -10,7 +10,7 @@ import {
 	DialogTitle,
 } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
-import { Clock, Mic, MicOff, Send, User, Bot, Loader2 } from "lucide-react";
+import { Clock, Mic, MicOff, Send, User, Bot, Loader2, Volume2 } from "lucide-react";
 
 interface InterviewSessionProps {
 	documentData: { type: "link" | "text"; content: string };
@@ -59,7 +59,9 @@ export function InterviewSession({
 	const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
 	const [isRecording, setIsRecording] = useState(false);
 	const [showVoiceModal, setShowVoiceModal] = useState(false);
+	const [showReadingModal, setShowReadingModal] = useState(false);
 	const [voiceTimeLeft, setVoiceTimeLeft] = useState(0);
+	const [readingTimeLeft, setReadingTimeLeft] = useState(3);
 	const [scores, setScores] = useState<number[]>([]);
 	const [isAiSpeaking, setIsAiSpeaking] = useState(false);
 
@@ -81,12 +83,11 @@ export function InterviewSession({
 			setMessages([firstMessage]);
 			setIsAiSpeaking(false);
 
-			// 음성 모드면 자동으로 모달 표시
+			// 음성 모드면 질문 읽기 모달 표시
 			if (settings.mode === "voice" && settings.maxSpeakingTime) {
 				setTimeout(() => {
-					setVoiceTimeLeft(settings.maxSpeakingTime ?? 0);
-					setShowVoiceModal(true);
-					setIsRecording(true);
+					setShowReadingModal(true);
+					setReadingTimeLeft(3);
 				}, 1000);
 			}
 		}, 2000);
@@ -105,6 +106,30 @@ export function InterviewSession({
 
 		return () => clearInterval(timer);
 	}, [questions, settings.mode, settings.maxSpeakingTime]);
+
+	// 질문 읽기 타이머
+	useEffect(() => {
+		if (showReadingModal && readingTimeLeft > 0) {
+			const readingTimer = setInterval(() => {
+				setReadingTimeLeft((prev) => {
+					if (prev <= 1) {
+						clearInterval(readingTimer);
+						setShowReadingModal(false);
+						// 질문 읽기 완료 후 답변 모달 표시
+						setTimeout(() => {
+							setVoiceTimeLeft(settings.maxSpeakingTime ?? 0);
+							setShowVoiceModal(true);
+							setIsRecording(true);
+						}, 500);
+						return 0;
+					}
+					return prev - 1;
+				});
+			}, 1000);
+
+			return () => clearInterval(readingTimer);
+		}
+	}, [showReadingModal, readingTimeLeft, settings.maxSpeakingTime]);
 
 	useEffect(() => {
 		if (showVoiceModal && voiceTimeLeft > 0) {
@@ -174,12 +199,11 @@ export function InterviewSession({
 					setCurrentQuestionIndex(nextQuestionIndex);
 					setIsAiSpeaking(false);
 
-					// 음성 모드면 자동으로 모달 표시
+					// 음성 모드면 질문 읽기 모달 표시
 					if (settings.mode === "voice" && settings.maxSpeakingTime) {
 						setTimeout(() => {
-							setVoiceTimeLeft(settings.maxSpeakingTime ?? 0);
-							setShowVoiceModal(true);
-							setIsRecording(true);
+							setShowReadingModal(true);
+							setReadingTimeLeft(3);
 						}, 1000);
 					}
 				}, 1000);
@@ -195,65 +219,60 @@ export function InterviewSession({
 		// 음성을 텍스트로 변환 (모의)
 		const mockTranscription =
 			"음성으로 답변한 내용이 여기에 표시됩니다. 실제 구현에서는 음성 인식 API를 사용하여 변환됩니다.";
-		setInputValue(mockTranscription);
-
+		
 		// 자동 전송
+		const userMessage: Message = {
+			id: Date.now().toString(),
+			type: "user",
+			content: mockTranscription,
+			timestamp: new Date(),
+		};
+
+		setMessages((prev) => [...prev, userMessage]);
+		setIsAiSpeaking(true);
+
+		// AI 피드백 처리
 		setTimeout(() => {
-			const userMessage: Message = {
-				id: Date.now().toString(),
-				type: "user",
-				content: mockTranscription,
+			const score = Math.floor(Math.random() * 21) + 80;
+			setScores((prev) => [...prev, score]);
+
+			const feedback = generateFeedback(score, settings.speakingStyle);
+			const feedbackMessage: Message = {
+				id: (Date.now() + 1).toString(),
+				type: "ai",
+				content: feedback,
 				timestamp: new Date(),
+				score,
 			};
 
-			setMessages((prev) => [...prev, userMessage]);
-			setInputValue("");
-			setIsAiSpeaking(true);
+			setMessages((prev) => [...prev, feedbackMessage]);
 
-			// AI 피드백 처리
-			setTimeout(() => {
-				const score = Math.floor(Math.random() * 21) + 80;
-				setScores((prev) => [...prev, score]);
-
-				const feedback = generateFeedback(score, settings.speakingStyle);
-				const feedbackMessage: Message = {
-					id: (Date.now() + 1).toString(),
-					type: "ai",
-					content: feedback,
-					timestamp: new Date(),
-					score,
-				};
-
-				setMessages((prev) => [...prev, feedbackMessage]);
-
-				// 다음 질문
-				if (currentQuestionIndex < questions.length - 1) {
-					setTimeout(() => {
-						const nextQuestionIndex = currentQuestionIndex + 1;
-						const nextQuestion: Message = {
-							id: (Date.now() + 2).toString(),
-							type: "ai",
-							content: questions[nextQuestionIndex],
-							timestamp: new Date(),
-						};
-						setMessages((prev) => [...prev, nextQuestion]);
-						setCurrentQuestionIndex(nextQuestionIndex);
-						setIsAiSpeaking(false);
-
-						// 다음 음성 모달 자동 표시
-						if (settings.mode === "voice" && settings.maxSpeakingTime) {
-							setTimeout(() => {
-								setVoiceTimeLeft(settings.maxSpeakingTime ?? 0);
-								setShowVoiceModal(true);
-								setIsRecording(true);
-							}, 1000);
-						}
-					}, 1000);
-				} else {
+			// 다음 질문
+			if (currentQuestionIndex < questions.length - 1) {
+				setTimeout(() => {
+					const nextQuestionIndex = currentQuestionIndex + 1;
+					const nextQuestion: Message = {
+						id: (Date.now() + 2).toString(),
+						type: "ai",
+						content: questions[nextQuestionIndex],
+						timestamp: new Date(),
+					};
+					setMessages((prev) => [...prev, nextQuestion]);
+					setCurrentQuestionIndex(nextQuestionIndex);
 					setIsAiSpeaking(false);
-				}
-			}, 3000);
-		}, 100);
+
+					// 다음 질문 읽기 모달 자동 표시
+					if (settings.mode === "voice" && settings.maxSpeakingTime) {
+						setTimeout(() => {
+							setShowReadingModal(true);
+							setReadingTimeLeft(3);
+						}, 1000);
+					}
+				}, 1000);
+			} else {
+				setIsAiSpeaking(false);
+			}
+		}, 3000);
 	};
 
 	const generateFeedback = (score: number, style: "friend" | "interviewer") => {
@@ -414,6 +433,30 @@ export function InterviewSession({
 					</CardContent>
 				</Card>
 			</div>
+
+			{/* 질문 읽기 모달 */}
+			<Dialog open={showReadingModal} onOpenChange={() => {}}>
+				<DialogContent className="text-center">
+					<DialogHeader>
+						<DialogTitle>질문을 읽고 있습니다</DialogTitle>
+					</DialogHeader>
+					<div className="py-8">
+						<div className="flex justify-center mb-4">
+							<div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center animate-pulse">
+								<Volume2 className="h-10 w-10 text-blue-600" />
+							</div>
+						</div>
+						<p className="text-lg font-semibold mb-2">AI가 질문을 읽어드리고 있어요</p>
+						<p className="text-3xl font-bold text-blue-600">
+							{readingTimeLeft}초
+						</p>
+						<Progress
+							value={((3 - readingTimeLeft) / 3) * 100}
+							className="mt-4"
+						/>
+					</div>
+				</DialogContent>
+			</Dialog>
 
 			{/* 음성 녹음 모달 */}
 			<Dialog open={showVoiceModal} onOpenChange={() => {}}>

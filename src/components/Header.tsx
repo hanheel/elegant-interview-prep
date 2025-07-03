@@ -1,7 +1,7 @@
 
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from './ThemeToggle';
-import { BookOpen, Target, Archive, FileText, Home } from 'lucide-react';
+import { Archive, Home } from 'lucide-react';
 
 interface HeaderProps {
   currentView: string;
@@ -11,7 +11,6 @@ interface HeaderProps {
 export function Header({ currentView, onViewChange }: HeaderProps) {
   const navItems = [
     { id: 'home', label: '홈', icon: Home },
-    { id: 'documents', label: '문서 저장소', icon: FileText },
     { id: 'archive', label: '아카이브', icon: Archive },
   ];
 
