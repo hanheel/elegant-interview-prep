@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { ThemeProvider } from '@/components/ThemeProvider';
 import { Header } from '@/components/Header';
@@ -9,7 +10,6 @@ import { PracticeSession } from '@/components/PracticeSession';
 import { InterviewSession } from '@/components/InterviewSession';
 import { InterviewComplete } from '@/components/InterviewComplete';
 import { ArchivePage } from '@/components/ArchivePage';
-import { DocumentsPage } from '@/components/DocumentsPage';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { AlertTriangle } from 'lucide-react';
@@ -76,7 +76,26 @@ const Index = () => {
     console.log('Interview started with:', { documentData, settings });
   };
 
-  const handlePracticeComplete = () => {
+  const handlePracticeComplete = (practiceData: any) => {
+    if (practiceData) {
+      // 아카이브에 저장
+      const archiveData = {
+        id: Date.now().toString(),
+        type: 'practice',
+        date: new Date().toISOString(),
+        score: practiceData.score,
+        documentData: documentData!,
+        settings: practiceSettings!,
+        practiceData
+      };
+      
+      const existingArchive = JSON.parse(localStorage.getItem('interview-archive') || '[]');
+      existingArchive.push(archiveData);
+      localStorage.setItem('interview-archive', JSON.stringify(existingArchive));
+      
+      console.log('Saving practice to archive with score:', practiceData.score);
+    }
+    
     setCurrentView('home');
     // 연습 완료 후 초기화
     setCurrentMode(null);
@@ -94,6 +113,7 @@ const Index = () => {
     // 아카이브에 저장
     const archiveData = {
       id: Date.now().toString(),
+      type: 'interview',
       date: new Date().toISOString(),
       score: interviewScore!,
       documentData: documentData!,
@@ -194,8 +214,6 @@ const Index = () => {
             onHome={handleBackToHome}
           />
         );
-      case 'documents':
-        return <DocumentsPage />;
       case 'archive':
         return <ArchivePage />;
       default:

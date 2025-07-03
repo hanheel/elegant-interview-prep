@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,7 +11,7 @@ import {
 	DialogTitle,
 } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
-import { Clock, Mic, MicOff, Send, User, Bot, Loader2, Volume2 } from "lucide-react";
+import { Clock, Mic, Send, User, Bot, Loader2, Volume2 } from "lucide-react";
 
 interface InterviewSessionProps {
 	documentData: { type: "link" | "text"; content: string };
@@ -34,7 +35,7 @@ interface Message {
 const mockQuestions = {
 	friend: [
 		"안녕하세요! 개발 공부하면서 가장 재미있었던 프로젝트가 무엇인지 궁금해요. 어떤 기술을 사용하셨고, 왜 그 기술을 선택하게 되셨는지 구체적인 경험을 들려주실 수 있을까요?",
-		"말씀해주신 기술 선택이 정말 흥미롭네요! FSD 아키텍처에 대해 이론적인 부분은 이해가 가는데, 구체적인 예시가 있으면 더 좋을 것 같아요. 경험을 담은 예시를 말씀해 주실 수 있나요?",
+		"말씀해주신 기술 선택이 정말 흥미롭네요! 그런데 실제로 개발하시면서 예상과 다르게 어려웠던 부분이 있으셨나요? 구체적인 예시와 함께 어떻게 해결하셨는지 들려주실 수 있을까요?",
 		"개발하면서 정말 어려웠던 버그나 문제 상황이 있으셨나요? 어떻게 해결하셨는지, 그 과정에서 배운 점이 있다면 구체적인 예시와 함께 말씀해주세요.",
 		"팀 프로젝트를 진행하실 때 어떤 역할을 주로 맡으셨나요? 팀원들과 소통하면서 겪으셨던 구체적인 경험이나 해결 방법이 있다면 들려주세요.",
 		"앞으로 어떤 개발자가 되고 싶으신지, 그리고 그 목표를 위해 현재 어떤 노력을 하고 계신지 구체적인 계획과 함께 말씀해주세요.",
@@ -59,11 +60,10 @@ export function InterviewSession({
 	const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
 	const [isRecording, setIsRecording] = useState(false);
 	const [showVoiceModal, setShowVoiceModal] = useState(false);
-	const [showReadingModal, setShowReadingModal] = useState(false);
 	const [voiceTimeLeft, setVoiceTimeLeft] = useState(0);
-	const [readingTimeLeft, setReadingTimeLeft] = useState(3);
 	const [scores, setScores] = useState<number[]>([]);
 	const [isAiSpeaking, setIsAiSpeaking] = useState(false);
+	const [isReadingQuestion, setIsReadingQuestion] = useState(false);
 
 	const chatContainerRef = useRef<HTMLDivElement>(null);
 
@@ -83,12 +83,9 @@ export function InterviewSession({
 			setMessages([firstMessage]);
 			setIsAiSpeaking(false);
 
-			// 음성 모드면 질문 읽기 모달 표시
+			// 음성 모드면 질문 읽기 시작
 			if (settings.mode === "voice" && settings.maxSpeakingTime) {
-				setTimeout(() => {
-					setShowReadingModal(true);
-					setReadingTimeLeft(3);
-				}, 1000);
+				handleQuestionReading();
 			}
 		}, 2000);
 
@@ -107,30 +104,7 @@ export function InterviewSession({
 		return () => clearInterval(timer);
 	}, [questions, settings.mode, settings.maxSpeakingTime]);
 
-	// 질문 읽기 타이머
-	useEffect(() => {
-		if (showReadingModal && readingTimeLeft > 0) {
-			const readingTimer = setInterval(() => {
-				setReadingTimeLeft((prev) => {
-					if (prev <= 1) {
-						clearInterval(readingTimer);
-						setShowReadingModal(false);
-						// 질문 읽기 완료 후 답변 모달 표시
-						setTimeout(() => {
-							setVoiceTimeLeft(settings.maxSpeakingTime ?? 0);
-							setShowVoiceModal(true);
-							setIsRecording(true);
-						}, 500);
-						return 0;
-					}
-					return prev - 1;
-				});
-			}, 1000);
-
-			return () => clearInterval(readingTimer);
-		}
-	}, [showReadingModal, readingTimeLeft, settings.maxSpeakingTime]);
-
+	// 음성 답변 시간 타이머
 	useEffect(() => {
 		if (showVoiceModal && voiceTimeLeft > 0) {
 			const voiceTimer = setInterval(() => {
@@ -153,7 +127,31 @@ export function InterviewSession({
 			chatContainerRef.current.scrollTop =
 				chatContainerRef.current.scrollHeight;
 		}
-	}, [messages, isAiSpeaking]);
+	}, [messages, isAiSpeaking, isReadingQuestion]);
+
+	const handleQuestionReading = () => {
+		// 질문 읽기 메시지 추가
+		setIsReadingQuestion(true);
+		const readingMessage: Message = {
+			id: `reading-${Date.now()}`,
+			type: "ai",
+			content: "질문을 읽고 있습니다...",
+			timestamp: new Date(),
+		};
+		setMessages(prev => [...prev, readingMessage]);
+
+		// 3초 후 질문 읽기 완료하고 음성 모달 표시
+		setTimeout(() => {
+			setIsReadingQuestion(false);
+			// 읽기 메시지 제거
+			setMessages(prev => prev.filter(msg => msg.id !== readingMessage.id));
+			
+			// 음성 모달 표시
+			setVoiceTimeLeft(settings.maxSpeakingTime ?? 0);
+			setShowVoiceModal(true);
+			setIsRecording(true);
+		}, 3000);
+	};
 
 	const handleSendMessage = () => {
 		if (!inputValue.trim()) return;
@@ -199,11 +197,10 @@ export function InterviewSession({
 					setCurrentQuestionIndex(nextQuestionIndex);
 					setIsAiSpeaking(false);
 
-					// 음성 모드면 질문 읽기 모달 표시
+					// 음성 모드면 질문 읽기 시작
 					if (settings.mode === "voice" && settings.maxSpeakingTime) {
 						setTimeout(() => {
-							setShowReadingModal(true);
-							setReadingTimeLeft(3);
+							handleQuestionReading();
 						}, 1000);
 					}
 				}, 1000);
@@ -261,11 +258,10 @@ export function InterviewSession({
 					setCurrentQuestionIndex(nextQuestionIndex);
 					setIsAiSpeaking(false);
 
-					// 다음 질문 읽기 모달 자동 표시
+					// 다음 질문 읽기 시작
 					if (settings.mode === "voice" && settings.maxSpeakingTime) {
 						setTimeout(() => {
-							setShowReadingModal(true);
-							setReadingTimeLeft(3);
+							handleQuestionReading();
 						}, 1000);
 					}
 				}, 1000);
@@ -367,18 +363,26 @@ export function InterviewSession({
 										className={`max-w-[80%] p-3 rounded-lg ${
 											message.type === "user"
 												? "bg-primary text-primary-foreground ml-4"
+												: message.content === "질문을 읽고 있습니다..."
+												? "bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 mr-4"
 												: "bg-muted mr-4"
 										}`}
 									>
 										<div className="flex items-start gap-2">
 											{message.type === "ai" && (
-												<Bot className="h-5 w-5 mt-0.5 text-muted-foreground" />
+												message.content === "질문을 읽고 있습니다..." ? (
+													<Volume2 className="h-5 w-5 mt-0.5 text-blue-600 animate-pulse" />
+												) : (
+													<Bot className="h-5 w-5 mt-0.5 text-muted-foreground" />
+												)
 											)}
 											{message.type === "user" && (
 												<User className="h-5 w-5 mt-0.5" />
 											)}
 											<div className="flex-1">
-												<p className="text-sm">{message.content}</p>
+												<p className={`text-sm ${message.content === "질문을 읽고 있습니다..." ? "text-blue-600 dark:text-blue-400 font-medium" : ""}`}>
+													{message.content}
+												</p>
 												{message.score && (
 													<Badge className="mt-2" variant="secondary">
 														점수: {message.score}점
@@ -433,30 +437,6 @@ export function InterviewSession({
 					</CardContent>
 				</Card>
 			</div>
-
-			{/* 질문 읽기 모달 */}
-			<Dialog open={showReadingModal} onOpenChange={() => {}}>
-				<DialogContent className="text-center">
-					<DialogHeader>
-						<DialogTitle>질문을 읽고 있습니다</DialogTitle>
-					</DialogHeader>
-					<div className="py-8">
-						<div className="flex justify-center mb-4">
-							<div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center animate-pulse">
-								<Volume2 className="h-10 w-10 text-blue-600" />
-							</div>
-						</div>
-						<p className="text-lg font-semibold mb-2">AI가 질문을 읽어드리고 있어요</p>
-						<p className="text-3xl font-bold text-blue-600">
-							{readingTimeLeft}초
-						</p>
-						<Progress
-							value={((3 - readingTimeLeft) / 3) * 100}
-							className="mt-4"
-						/>
-					</div>
-				</DialogContent>
-			</Dialog>
 
 			{/* 음성 녹음 모달 */}
 			<Dialog open={showVoiceModal} onOpenChange={() => {}}>

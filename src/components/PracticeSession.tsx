@@ -5,12 +5,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { CheckCircle, AlertCircle, ArrowRight } from 'lucide-react';
 
 interface PracticeSessionProps {
   documentData: { type: 'link' | 'text'; content: string };
   settings: { questionCount: number; difficulty: 'easy' | 'medium' | 'hard' };
-  onComplete: () => void;
+  onComplete: (practiceData: any) => void;
 }
 
 // 모의 질문 데이터
@@ -53,6 +54,8 @@ export function PracticeSession({ documentData, settings, onComplete }: Practice
   const [showFeedback, setShowFeedback] = useState(false);
   const [showFollowUp, setShowFollowUp] = useState(false);
   const [showFollowUpFeedback, setShowFollowUpFeedback] = useState(false);
+  const [showSaveModal, setShowSaveModal] = useState(false);
+  const [scores, setScores] = useState<number[]>([]);
   
   // 질문과 꼬리질문을 고정하기 위한 ref 사용
   const questionsRef = useRef(mockQuestions[settings.difficulty]);
@@ -68,6 +71,10 @@ export function PracticeSession({ documentData, settings, onComplete }: Practice
   };
 
   const handleNextToFollowUp = () => {
+    // 메인 답변 점수 생성
+    const score = Math.floor(Math.random() * 21) + 80;
+    setScores(prev => [...prev, score]);
+    
     setShowFeedback(false);
     setShowFollowUp(true);
   };
@@ -79,7 +86,12 @@ export function PracticeSession({ documentData, settings, onComplete }: Practice
 
   const handleNextQuestion = () => {
     if (isLastQuestion) {
-      onComplete();
+      // 마지막 꼬리질문 점수 추가
+      const finalScore = Math.floor(Math.random() * 21) + 80;
+      const finalScores = [...scores, finalScore];
+      setScores(finalScores);
+      
+      setShowSaveModal(true);
     } else {
       setCurrentQuestionIndex(prev => prev + 1);
       setAnswer('');
@@ -90,6 +102,21 @@ export function PracticeSession({ documentData, settings, onComplete }: Practice
       // 새로운 꼬리질문 생성
       followUpQuestionRef.current = mockFollowUpQuestions[Math.floor(Math.random() * mockFollowUpQuestions.length)];
     }
+  };
+
+  const handleSavePractice = () => {
+    const averageScore = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
+    const practiceData = {
+      score: averageScore,
+      questionsAnswered: currentQuestionIndex + 1,
+      averageScore,
+      totalTime: 0 // 연습 모드는 시간 제한이 없음
+    };
+    onComplete(practiceData);
+  };
+
+  const handleSkipSave = () => {
+    onComplete(null); // null을 전달하여 저장하지 않음을 표시
   };
 
   const getFeedback = () => {
@@ -242,6 +269,27 @@ export function PracticeSession({ documentData, settings, onComplete }: Practice
           </CardContent>
         </Card>
       </div>
+
+      {/* 저장 확인 모달 */}
+      <Dialog open={showSaveModal} onOpenChange={() => {}}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>연습 완료!</DialogTitle>
+            <DialogDescription>
+              연습 결과를 아카이브에 저장하시겠습니까? 
+              저장하시면 나중에 연습 기록을 다시 확인하실 수 있습니다.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end gap-2 mt-4">
+            <Button variant="outline" onClick={handleSkipSave}>
+              저장하지 않기
+            </Button>
+            <Button onClick={handleSavePractice}>
+              아카이브에 저장
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
